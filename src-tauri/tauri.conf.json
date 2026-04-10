@@ -61,12 +61,7 @@
       "nsis": {
         "displayLanguageSelector": false,
         "languages": ["English"],
-        "installerIcon": "icons/icon.ico",
-        "uninstallerIcon": "icons/icon.ico",
-        "allowToChangeInstallationDirectory": true,
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true,
-        "runAfterFinish": true
+        "installerIcon": "icons/icon.ico"
       },
       "webviewInstallMode": {
         "type": "embedBootstrapper"
