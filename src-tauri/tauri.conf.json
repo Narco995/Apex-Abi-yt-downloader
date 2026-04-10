@@ -1,0 +1,124 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "Abi YT Downloader",
+  "version": "1.0.0",
+  "identifier": "com.abiyt.downloader",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Abi YT Downloader",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "theme": "dark"
+      }
+    ],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "AbiYT",
+    "copyright": "Copyright © 2024 AbiYT",
+    "category": "Productivity",
+    "shortDescription": "High-performance YouTube video downloader",
+    "longDescription": "Abi YT Downloader is a powerful, fast, and secure YouTube video downloader built with Tauri and Rust. Download videos in multiple formats and qualities with ease.",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "tsp": false,
+      "wix": {
+        "language": "en-US"
+      },
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": ["English"],
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "allowToChangeInstallationDirectory": true,
+        "createDesktopShortcut": true,
+        "createStartMenuShortcut": true,
+        "runAfterFinish": true
+      },
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      }
+    },
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true,
+      "scope": [
+        {
+          "name": "open-folder",
+          "cmd": "explorer",
+          "args": ["{0}"]
+        }
+      ]
+    },
+    "fs": {
+      "scope": ["**"]
+    },
+    "dialog": {
+      "all": true,
+      "ask": true,
+      "confirm": true,
+      "message": true,
+      "open": true,
+      "save": true
+    },
+    "notification": {
+      "all": true
+    },
+    "process": {
+      "all": true,
+      "exitWithChildren": true
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [],
+      "dialog": true,
+      "pubkey": ""
+    }
+  }
+}
