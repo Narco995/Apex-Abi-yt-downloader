@@ -62,18 +62,21 @@ export const api = {
   },
 };
 
-export function listenToProgress(callback: (progress: DownloadProgress) => void) {
-  import('@tauri-apps/api/event').then(({ listen }) => {
-    listen<DownloadProgress>('download-progress', (event) => {
-      callback(event.payload);
-    });
+// Fix: return Promise<unlisten fn> so callers can clean up on unmount
+export async function listenToProgress(
+  callback: (progress: DownloadProgress) => void
+): Promise<() => void> {
+  const { listen } = await import('@tauri-apps/api/event');
+  return listen<DownloadProgress>('download-progress', (event) => {
+    callback(event.payload);
   });
 }
 
-export function listenToComplete(callback: (download: Download) => void) {
-  import('@tauri-apps/api/event').then(({ listen }) => {
-    listen<Download>('download-complete', (event) => {
-      callback(event.payload);
-    });
+export async function listenToComplete(
+  callback: (download: Download) => void
+): Promise<() => void> {
+  const { listen } = await import('@tauri-apps/api/event');
+  return listen<Download>('download-complete', (event) => {
+    callback(event.payload);
   });
 }

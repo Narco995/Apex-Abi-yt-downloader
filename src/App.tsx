@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Settings, Download, Info, Github } from 'lucide-react';
 import { Dashboard, SettingsModal, Button } from '@/components';
 import { useAppStore } from '@/stores/useAppStore';
-import { api } from '@/utils/tauri';
 import { Toaster } from 'react-hot-toast';
+// Fix: removed unused `api` import
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);

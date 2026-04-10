@@ -49,20 +49,27 @@ pub async fn start_download(
     if request.output_path.is_empty() {
         request.output_path = settings.download_path;
     }
+
+    // Fix: generate the download ID upfront so active_downloads entry and engine share the same ID.
+    // Previously, Download::new() in active_downloads and the engine each generated separate UUIDs,
+    // making progress events untrackable (they'd never find the right entry in active_downloads).
+    let download_id = uuid::Uuid::new_v4().to_string();
     
     let (progress_tx, mut progress_rx) = mpsc::channel::<DownloadProgress>(100);
     
-    // Add to active downloads
+    // Add to active downloads with pre-generated ID
     {
         let mut downloads = manager.active_downloads.write();
-        downloads.push(Download::new(
+        let mut new_download = Download::new(
             request.url.clone(),
             String::new(),
             String::new(),
             request.format.clone(),
             request.quality.clone(),
             std::path::PathBuf::from(&request.output_path),
-        ));
+        );
+        new_download.id = download_id.clone();
+        downloads.push(new_download);
     }
     
     // Spawn progress reporter
@@ -72,7 +79,7 @@ pub async fn start_download(
         while let Some(progress) = progress_rx.recv().await {
             let _ = app_clone.emit("download-progress", &progress);
             
-            // Update active download
+            // Update active download — now correctly finds the entry since IDs match
             let mut downloads = downloads_clone.write();
             if let Some(d) = downloads.iter_mut().find(|d| d.id == progress.id) {
                 d.progress = progress.progress;
@@ -84,7 +91,8 @@ pub async fn start_download(
         }
     });
     
-    let result = manager.engine.download(request, progress_tx).await;
+    // Pass the pre-generated ID to the engine
+    let result = manager.engine.download(request, progress_tx, Some(download_id)).await;
     
     match result {
         Ok(download) => {
@@ -146,6 +154,7 @@ pub async fn batch_download(
             output_path,
         };
         
+        let download_id = uuid::Uuid::new_v4().to_string();
         let (progress_tx, mut progress_rx) = mpsc::channel::<DownloadProgress>(100);
         let app_clone = app.clone();
         let downloads_clone = manager.active_downloads.clone();
@@ -164,7 +173,7 @@ pub async fn batch_download(
             }
         });
         
-        match manager.engine.download(single_request, progress_tx).await {
+        match manager.engine.download(single_request, progress_tx, Some(download_id)).await {
             Ok(download) => {
                 let _ = app.emit("download-complete", &download);
                 if download.status == crate::models::DownloadStatus::Completed {

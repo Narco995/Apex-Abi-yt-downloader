@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::{mpsc, Semaphore};
@@ -18,20 +17,24 @@ pub struct DownloadEngine {
 impl DownloadEngine {
     pub fn new(parallel_limit: usize) -> Self {
         Self {
-            semaphore: Arc::new(Semaphore::new(parallel_limit)),
+            semaphore: Arc::new(Semaphore::new(parallel_limit.max(1))),
             cancel_tokens: Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new())),
         }
     }
 
+    /// Fix: accepts an optional pre-generated download_id so callers can track the download
+    /// in active_downloads before the engine starts (previously IDs mismatched, breaking progress).
     pub async fn download(
         &self,
         request: DownloadRequest,
         progress_tx: mpsc::Sender<DownloadProgress>,
+        download_id: Option<String>,
     ) -> Result<Download> {
         let _permit = self.semaphore.acquire().await.map_err(|e| anyhow!("Semaphore error: {}", e))?;
         
         let cancel_token = CancellationToken::new();
-        let download_id = uuid::Uuid::new_v4().to_string();
+        // Use the caller-provided ID or generate a new one
+        let download_id = download_id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
         
         {
             let mut tokens = self.cancel_tokens.write();
@@ -87,6 +90,17 @@ impl DownloadEngine {
         let stdout = child.stdout.take().ok_or_else(|| anyhow!("Failed to capture stdout"))?;
         let stderr = child.stderr.take().ok_or_else(|| anyhow!("Failed to capture stderr"))?;
 
+        // Fix: drain stderr in a background task to prevent pipe buffer deadlock.
+        // Previously stderr was captured but never read — if yt-dlp wrote enough to fill
+        // the OS pipe buffer, the child process would block forever.
+        tokio::spawn(async move {
+            let mut reader = BufReader::new(stderr).lines();
+            tokio::pin!(reader);
+            while let Ok(Some(_line)) = reader.next_line().await {
+                // Could log here if needed: tracing::debug!("yt-dlp stderr: {}", _line);
+            }
+        });
+
         let download_id_owned = download_id.to_string();
         let progress_tx_clone = progress_tx.clone();
         let cancel_token_clone = cancel_token.clone();
@@ -125,6 +139,7 @@ impl DownloadEngine {
             request.quality.clone(),
             PathBuf::from(&request.output_path),
         );
+        // Fix: use the pre-agreed download_id (was generating a new UUID here, mismatching callers)
         download.id = download_id.to_string();
         download.status = DownloadStatus::Downloading;
 

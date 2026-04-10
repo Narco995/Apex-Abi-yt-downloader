@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use regex::Regex;
 use serde_json::Value;
-use std::process::Command;
+use tokio::process::Command; // Fix: was std::process::Command (blocking in async context)
 
 use crate::models::{Video, VideoInfo, VideoQuality};
 
@@ -18,10 +18,11 @@ impl VideoResolver {
                 "--dump-json",
                 "--no-download",
                 "--no-warnings",
-                "--flat-playlist",
+                // Fix: removed --flat-playlist which strips format/quality data from single-video responses
                 url,
             ])
             .output()
+            .await // Fix: properly awaited (was blocking the tokio runtime)
             .map_err(|e| anyhow!("Failed to execute yt-dlp: {}. Make sure yt-dlp is installed.", e))?;
 
         if !output.status.success() {
@@ -44,7 +45,7 @@ impl VideoResolver {
                 .collect::<Vec<_>>()
         )
         .await
-        }
+    }
 
     fn parse_video_info(&self, json: &Value, url: &str) -> Result<Video> {
         Ok(Video {
@@ -58,8 +59,8 @@ impl VideoResolver {
                 .to_string(),
             duration: json["duration"].as_u64().unwrap_or(0) as u32,
             channel: json["uploader"]
-                .or(json["channel"])
                 .as_str()
+                .or(json["channel"].as_str())
                 .unwrap_or("Unknown")
                 .to_string(),
             view_count: json["view_count"].as_u64(),
@@ -85,8 +86,8 @@ impl VideoResolver {
                     vcodec: format["vcodec"].as_str().unwrap_or("none").to_string(),
                     acodec: format["acodec"].as_str().unwrap_or("none").to_string(),
                     filesize: format["filesize"]
-                        .or(format["filesize_approx"])
-                        .and_then(|v| v.as_u64()),
+                        .as_u64()
+                        .or_else(|| format["filesize_approx"].as_u64()),
                     is_video_only: format["vcodec"].as_str().map(|s| s != "none").unwrap_or(false) 
                         && format["acodec"].as_str().map(|s| s == "none").unwrap_or(true),
                     is_audio_only: format["acodec"].as_str().map(|s| s != "none").unwrap_or(false)

@@ -9,7 +9,41 @@ export function useDownloads() {
   useEffect(() => {
     fetchDependencies();
     loadActiveDownloads();
-    setupEventListeners();
+
+    // Fix: capture unlisten functions and call them on cleanup.
+    // Previously listeners were registered with no cleanup, causing them to stack
+    // up on every mount (especially in React Strict Mode), leaking memory and
+    // causing duplicate updates.
+    let unlistenProgress: (() => void) | undefined;
+    let unlistenComplete: (() => void) | undefined;
+
+    listenToProgress((progress: DownloadProgress) => {
+      updateDownload(progress.id, {
+        progress: progress.progress,
+        downloaded_bytes: progress.downloaded_bytes,
+        total_bytes: progress.total_bytes,
+        speed: progress.speed,
+        eta_seconds: progress.eta_seconds,
+      });
+    }).then((unlisten) => {
+      unlistenProgress = unlisten;
+    });
+
+    listenToComplete((download: Download) => {
+      updateDownload(download.id, {
+        status: download.status,
+        progress: download.progress,
+        error: download.error,
+        completed_at: download.completed_at,
+      });
+    }).then((unlisten) => {
+      unlistenComplete = unlisten;
+    });
+
+    return () => {
+      unlistenProgress?.();
+      unlistenComplete?.();
+    };
   }, []);
 
   const loadActiveDownloads = async () => {
@@ -21,28 +55,7 @@ export function useDownloads() {
     }
   };
 
-  const setupEventListeners = () => {
-    listenToProgress((progress: DownloadProgress) => {
-      updateDownload(progress.id, {
-        progress: progress.progress,
-        downloaded_bytes: progress.downloaded_bytes,
-        total_bytes: progress.total_bytes,
-        speed: progress.speed,
-        eta_seconds: progress.eta_seconds,
-      });
-    });
-
-    listenToComplete((download: Download) => {
-      updateDownload(download.id, {
-        status: download.status,
-        progress: download.progress,
-        error: download.error,
-        completed_at: download.completed_at,
-      });
-    });
-  };
-
-  const startDownload = useCallback(async (request: any) => {
+  const startDownload = useCallback(async (request: DownloadRequest) => {
     try {
       const download = await api.startDownload(request);
       setActiveDownloads([...activeDownloads, download]);
@@ -63,7 +76,7 @@ export function useDownloads() {
     }
   }, [updateDownload]);
 
-  const batchDownload = useCallback(async (request: any) => {
+  const batchDownload = useCallback(async (request: BatchDownloadRequest) => {
     try {
       const downloads = await api.batchDownload(request);
       setActiveDownloads([...activeDownloads, ...downloads]);
@@ -81,3 +94,7 @@ export function useDownloads() {
     batchDownload,
   };
 }
+
+// Local type aliases to satisfy TypeScript without importing from types (already imported above)
+type DownloadRequest = import('@/types').DownloadRequest;
+type BatchDownloadRequest = import('@/types').BatchDownloadRequest;
