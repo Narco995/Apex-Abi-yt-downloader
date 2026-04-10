@@ -31,13 +31,17 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -46,7 +50,7 @@
       "icons/icon.ico"
     ],
     "publisher": "AbiYT",
-    "copyright": "Copyright \u00a9 2024 AbiYT",
+    "copyright": "Copyright © 2024 AbiYT",
     "category": "Productivity",
     "shortDescription": "High-performance YouTube video downloader",
     "longDescription": "Abi YT Downloader is a powerful, fast, and secure YouTube video downloader built with Tauri and Rust. Download videos in multiple formats and qualities with ease.",
@@ -55,16 +59,15 @@
       "digestAlgorithm": "sha256",
       "timestampUrl": "",
       "tsp": false,
-      "wix": {
-        "language": "en-US"
-      },
       "nsis": {
         "displayLanguageSelector": false,
-        "languages": ["English"],
+        "languages": [
+          "English"
+        ],
         "installerIcon": "icons/icon.ico"
       },
       "webviewInstallMode": {
-        "type": "embedBootstrapper"
+        "type": "downloadBootstrapper"
       }
     },
     "macOS": {
@@ -87,12 +90,16 @@
         {
           "name": "open-folder",
           "cmd": "explorer",
-          "args": ["{0}"]
+          "args": [
+            "{0}"
+          ]
         }
       ]
     },
     "fs": {
-      "scope": ["**"]
+      "scope": [
+        "**"
+      ]
     },
     "dialog": {
       "all": true,
@@ -108,12 +115,6 @@
     "process": {
       "all": true,
       "exitWithChildren": true
-    },
-    "updater": {
-      "active": false,
-      "endpoints": [],
-      "dialog": true,
-      "pubkey": ""
     }
   }
 }

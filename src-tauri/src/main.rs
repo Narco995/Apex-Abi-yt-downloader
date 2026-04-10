@@ -31,7 +31,6 @@ fn main() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init()) // Fix: was missing, required for window.open() & open_folder
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(settings)
         .manage(history)
         .manage(download_manager)
