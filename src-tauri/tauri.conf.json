@@ -46,7 +46,7 @@
       "icons/icon.ico"
     ],
     "publisher": "AbiYT",
-    "copyright": "Copyright © 2024 AbiYT",
+    "copyright": "Copyright \u00a9 2024 AbiYT",
     "category": "Productivity",
     "shortDescription": "High-performance YouTube video downloader",
     "longDescription": "Abi YT Downloader is a powerful, fast, and secure YouTube video downloader built with Tauri and Rust. Download videos in multiple formats and qualities with ease.",
@@ -115,7 +115,7 @@
       "exitWithChildren": true
     },
     "updater": {
-      "active": true,
+      "active": false,
       "endpoints": [],
       "dialog": true,
       "pubkey": ""
