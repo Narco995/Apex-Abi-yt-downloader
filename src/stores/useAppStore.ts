@@ -28,7 +28,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       settings: null,
       activeDownloads: [],
       currentVideo: null,

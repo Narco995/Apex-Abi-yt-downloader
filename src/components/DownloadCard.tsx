@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { X, Play, Pause, Folder, RotateCcw } from 'lucide-react';
+import { X, Play, Folder, RotateCcw } from 'lucide-react';
 import type { Download } from '@/types';
 import { Button } from './Button';
 import { ProgressBar } from './ProgressBar';
