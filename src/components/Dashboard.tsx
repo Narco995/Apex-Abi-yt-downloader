@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Search, Download, Settings, Folder, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Download, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from './Button';
 import { Input } from './Input';
 import { DownloadCard } from './DownloadCard';
@@ -17,7 +17,7 @@ export function Dashboard() {
   const [currentVideo, setCurrentVideo] = useState<VideoInfo | null>(null);
   
   const { activeDownloads, startDownload, cancelDownload } = useDownloads();
-  const { settings, dependencies, fetchSettings } = useAppStore();
+  const { settings, dependencies } = useAppStore();
 
   const handleResolve = useCallback(async () => {
     if (!url.trim()) return;
