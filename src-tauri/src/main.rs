@@ -6,7 +6,8 @@ mod models;
 mod services;
 mod utils;
 
-use commands::{downloads::DownloadManager, settings::*, downloads::*, system::*};
+use commands::{downloads::DownloadManager, settings::*, system::*};
+use commands::downloads::*;
 use services::{SettingsService, HistoryService};
 use tauri::Manager;
 
