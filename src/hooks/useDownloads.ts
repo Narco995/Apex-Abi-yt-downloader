@@ -4,7 +4,7 @@ import { api, listenToProgress, listenToComplete } from '@/utils/tauri';
 import type { DownloadProgress, Download } from '@/types';
 
 export function useDownloads() {
-  const { activeDownloads, setActiveDownloads, updateDownload, fetchDependencies } = useAppStore();
+  const { activeDownloads, setActiveDownloads, updateDownload, fetchDependencies, addDownload, addDownloads } = useAppStore();
 
   // Defined BEFORE useEffect to avoid temporal dead zone (TDZ) — TypeScript strict
   // mode flags block-scoped variables used before their lexical declaration.
@@ -58,13 +58,13 @@ export function useDownloads() {
   const startDownload = useCallback(async (request: DownloadRequest) => {
     try {
       const download = await api.startDownload(request);
-      setActiveDownloads([...activeDownloads, download]);
+      addDownload(download);
       return download;
     } catch (error) {
       console.error('Failed to start download:', error);
       throw error;
     }
-  }, [activeDownloads, setActiveDownloads]);
+  }, [addDownload]);
 
   const cancelDownload = useCallback(async (downloadId: string) => {
     try {
@@ -79,13 +79,13 @@ export function useDownloads() {
   const batchDownload = useCallback(async (request: BatchDownloadRequest) => {
     try {
       const downloads = await api.batchDownload(request);
-      setActiveDownloads([...activeDownloads, ...downloads]);
+      addDownloads(downloads);
       return downloads;
     } catch (error) {
       console.error('Failed to start batch download:', error);
       throw error;
     }
-  }, [activeDownloads, setActiveDownloads]);
+  }, [addDownloads]);
 
   return {
     activeDownloads,

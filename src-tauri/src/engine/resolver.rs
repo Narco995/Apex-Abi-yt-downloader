@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Result};
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde_json::Value;
-use tokio::process::Command; // Fix: was std::process::Command (blocking in async context)
+use tokio::process::Command;
 
 use crate::models::{Video, VideoInfo, VideoQuality};
 
@@ -124,18 +125,17 @@ impl Default for VideoResolver {
     }
 }
 
+// Fix: compile Regex once at startup instead of on every validation call.
+static YOUTUBE_URL_PATTERNS: Lazy<[Regex; 5]> = Lazy::new(|| {
+    [
+        Regex::new(r"(?:https?://)?(?:www\.)?youtube\.com/watch\?v=[\w-]+").unwrap(),
+        Regex::new(r"(?:https?://)?(?:www\.)?youtu\.be/[\w-]+").unwrap(),
+        Regex::new(r"(?:https?://)?(?:www\.)?youtube\.com/shorts/[\w-]+").unwrap(),
+        Regex::new(r"(?:https?://)?(?:www\.)?youtube\.com/playlist\?list=[\w-]+").unwrap(),
+        Regex::new(r"(?:https?://)?(?:m\.)?youtube\.com/watch\?v=[\w-]+").unwrap(),
+    ]
+});
+
 pub fn is_valid_youtube_url(url: &str) -> bool {
-    let patterns = [
-        r"(?:https?://)?(?:www\.)?youtube\.com/watch\?v=[\w-]+",
-        r"(?:https?://)?(?:www\.)?youtu\.be/[\w-]+",
-        r"(?:https?://)?(?:www\.)?youtube\.com/shorts/[\w-]+",
-        r"(?:https?://)?(?:www\.)?youtube\.com/playlist\?list=[\w-]+",
-        r"(?:https?://)?(?:m\.)?youtube\.com/watch\?v=[\w-]+",
-    ];
-    
-    patterns.iter().any(|pattern| {
-        Regex::new(pattern)
-            .map(|re| re.is_match(url))
-            .unwrap_or(false)
-    })
+    YOUTUBE_URL_PATTERNS.iter().any(|re| re.is_match(url))
 }

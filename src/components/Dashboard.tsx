@@ -59,7 +59,10 @@ export function Dashboard() {
   }, [cancelDownload]);
 
   const handleOpenFolder = useCallback(async (filepath: string) => {
-    const folder = filepath.substring(0, filepath.lastIndexOf('/'));
+    // Fix: lastIndexOf('/') breaks on Windows backslash paths.
+    // Take the max of both separators to handle cross-platform paths.
+    const lastSep = Math.max(filepath.lastIndexOf('/'), filepath.lastIndexOf('\\'));
+    const folder = lastSep > -1 ? filepath.substring(0, lastSep) : filepath;
     await api.openFolder(folder);
   }, []);
 

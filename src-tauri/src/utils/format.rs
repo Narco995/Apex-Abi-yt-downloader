@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::time::Duration;
 
 pub fn format_duration(seconds: u32) -> String {

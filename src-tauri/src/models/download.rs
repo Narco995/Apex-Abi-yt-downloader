@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[allow(dead_code)] // Resolving/Converting/Paused reserved for future use
 pub enum DownloadStatus {
     Pending,
     Resolving,
@@ -67,6 +68,7 @@ impl Download {
         }
     }
     
+    #[allow(dead_code)] // Available for future progress tracking refactor
     pub fn update_progress(&mut self, downloaded: u64, total: u64, speed: u64) {
         self.downloaded_bytes = downloaded;
         self.total_bytes = total;

@@ -39,6 +39,7 @@ impl SettingsService {
         self.settings.read().clone()
     }
 
+    #[allow(dead_code)] // Functional updater pattern — reserved for future partial-update commands
     pub fn update<F>(&self, f: F) -> Result<()>
     where
         F: FnOnce(&mut Settings),

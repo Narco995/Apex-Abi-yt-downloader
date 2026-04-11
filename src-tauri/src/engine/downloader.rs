@@ -217,14 +217,16 @@ fn parse_progress_line(line: &str, last: &DownloadProgress) -> Option<DownloadPr
 
 fn parse_speed(s: &str) -> u64 {
     let s = s.trim();
-    if s.contains("KiB") {
-        s.replace("KiB/s", "").trim().parse().unwrap_or(0) * 1024
+    // Fix: was parsing KiB as u64 so "456.78KiB/s" → parse::<u64>() = Err → 0.
+    // All branches now parse as f64 first to handle decimal speeds from yt-dlp.
+    if s.contains("GiB") {
+        (s.replace("GiB/s", "").trim().parse::<f64>().unwrap_or(0.0) * 1024.0 * 1024.0 * 1024.0) as u64
     } else if s.contains("MiB") {
         (s.replace("MiB/s", "").trim().parse::<f64>().unwrap_or(0.0) * 1024.0 * 1024.0) as u64
-    } else if s.contains("GiB") {
-        (s.replace("GiB/s", "").trim().parse::<f64>().unwrap_or(0.0) * 1024.0 * 1024.0 * 1024.0) as u64
+    } else if s.contains("KiB") {
+        (s.replace("KiB/s", "").trim().parse::<f64>().unwrap_or(0.0) * 1024.0) as u64
     } else {
-        s.parse().unwrap_or(0)
+        s.parse::<f64>().unwrap_or(0.0) as u64
     }
 }
 

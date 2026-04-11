@@ -137,53 +137,72 @@ pub async fn batch_download(
     history: State<'_, HistoryService>,
     app: AppHandle,
 ) -> Result<Vec<Download>, String> {
-    let mut results = Vec::new();
     let base_settings = settings.get();
-    
-    for url in request.urls {
+
+    // Fix: was a sequential for-loop with .await — all downloads blocked each other.
+    // Spawn a task per URL; the semaphore in DownloadEngine gates actual parallelism.
+    let tasks: Vec<_> = request.urls.into_iter().map(|url| {
         let output_path = if request.output_path.is_empty() {
             base_settings.download_path.clone()
         } else {
             request.output_path.clone()
         };
-        
         let single_request = DownloadRequest {
             url,
             format: request.format.clone(),
             quality: request.quality.clone(),
             output_path,
         };
-        
-        let download_id = uuid::Uuid::new_v4().to_string();
-        let (progress_tx, mut progress_rx) = mpsc::channel::<DownloadProgress>(100);
-        let app_clone = app.clone();
+        let engine = manager.engine.clone();
         let downloads_clone = manager.active_downloads.clone();
-        
+        let app_clone = app.clone();
+
         tokio::spawn(async move {
-            while let Some(progress) = progress_rx.recv().await {
-                let _ = app_clone.emit("download-progress", &progress);
-                let mut downloads = downloads_clone.write();
-                if let Some(d) = downloads.iter_mut().find(|d| d.id == progress.id) {
-                    d.progress = progress.progress;
-                    d.downloaded_bytes = progress.downloaded_bytes;
-                    d.total_bytes = progress.total_bytes;
-                    d.speed = progress.speed;
-                    d.eta_seconds = progress.eta_seconds;
+            let download_id = uuid::Uuid::new_v4().to_string();
+            let (progress_tx, mut progress_rx) = mpsc::channel::<DownloadProgress>(100);
+
+            let app_prog = app_clone.clone();
+            let dl_clone = downloads_clone.clone();
+            tokio::spawn(async move {
+                while let Some(progress) = progress_rx.recv().await {
+                    let _ = app_prog.emit("download-progress", &progress);
+                    let mut downloads = dl_clone.write();
+                    if let Some(d) = downloads.iter_mut().find(|d| d.id == progress.id) {
+                        d.progress = progress.progress;
+                        d.downloaded_bytes = progress.downloaded_bytes;
+                        d.total_bytes = progress.total_bytes;
+                        d.speed = progress.speed;
+                        d.eta_seconds = progress.eta_seconds;
+                    }
+                }
+            });
+
+            match engine.download(single_request, progress_tx, Some(download_id)).await {
+                Ok(download) => {
+                    let _ = app_clone.emit("download-complete", &download);
+                    Ok(download)
+                }
+                Err(e) => {
+                    tracing::error!("Batch download error: {}", e);
+                    Err(e.to_string())
                 }
             }
-        });
-        
-        match manager.engine.download(single_request, progress_tx, Some(download_id)).await {
-            Ok(download) => {
-                let _ = app.emit("download-complete", &download);
-                if download.status == crate::models::DownloadStatus::Completed {
-                    let _ = history.add(&download);
-                }
-                results.push(download);
-            }
-            Err(e) => tracing::error!("Batch download error: {}", e),
+        })
+    }).collect();
+
+    // Collect all results, then record history (HistoryService not Clone so can't move into tasks)
+    let results: Vec<Download> = futures_util::future::join_all(tasks)
+        .await
+        .into_iter()
+        .filter_map(|join_result| join_result.ok())
+        .filter_map(|download_result| download_result.ok())
+        .collect();
+
+    for download in &results {
+        if download.status == crate::models::DownloadStatus::Completed {
+            let _ = history.add(download);
         }
     }
-    
+
     Ok(results)
 }

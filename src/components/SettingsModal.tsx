@@ -3,6 +3,7 @@ import { X, Save, RotateCcw, Folder } from 'lucide-react';
 import { Button } from './Button';
 import { Input } from './Input';
 import { useAppStore } from '@/stores/useAppStore';
+import type { VideoFormat, QualityPreference } from '@/types';
 import { api } from '@/utils/tauri';
 import { open } from '@tauri-apps/plugin-dialog';
 
@@ -129,7 +130,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </label>
                 <select
                   value={localSettings.preferred_format}
-                  onChange={(e) => setLocalSettings({ ...localSettings, preferred_format: e.target.value as any })}
+                  onChange={(e) => setLocalSettings({ ...localSettings, preferred_format: e.target.value as VideoFormat })}
                   className="w-full px-4 py-2 bg-dark-800 border border-dark-600 rounded-lg text-white"
                 >
                   <option value="MP4">MP4</option>
@@ -147,7 +148,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </label>
                 <select
                   value={localSettings.quality_preference}
-                  onChange={(e) => setLocalSettings({ ...localSettings, quality_preference: e.target.value as any })}
+                  onChange={(e) => setLocalSettings({ ...localSettings, quality_preference: e.target.value as QualityPreference })}
                   className="w-full px-4 py-2 bg-dark-800 border border-dark-600 rounded-lg text-white"
                 >
                   <option value="Highest">Highest</option>

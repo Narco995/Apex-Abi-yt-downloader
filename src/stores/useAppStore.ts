@@ -14,6 +14,8 @@ interface AppState {
   // Actions
   setSettings: (settings: Settings) => void;
   setActiveDownloads: (downloads: Download[]) => void;
+  addDownload: (download: Download) => void;
+  addDownloads: (downloads: Download[]) => void;
   updateDownload: (downloadId: string, updates: Partial<Download>) => void;
   setCurrentVideo: (video: VideoInfo | null) => void;
   setDependencies: (deps: { yt_dlp: boolean; ffmpeg: boolean }) => void;
@@ -38,6 +40,8 @@ export const useAppStore = create<AppState>()(
 
       setSettings: (settings) => set({ settings }),
       setActiveDownloads: (downloads) => set({ activeDownloads: downloads }),
+      addDownload: (download) => set((state) => ({ activeDownloads: [...state.activeDownloads, download] })),
+      addDownloads: (downloads) => set((state) => ({ activeDownloads: [...state.activeDownloads, ...downloads] })),
       updateDownload: (downloadId, updates) => set((state) => ({
         activeDownloads: state.activeDownloads.map((d) =>
           d.id === downloadId ? { ...d, ...updates } : d
