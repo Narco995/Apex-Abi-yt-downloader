@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[allow(dead_code)]
 pub struct Converter;
 
 impl Converter {

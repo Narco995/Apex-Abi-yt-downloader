@@ -43,6 +43,7 @@ pub struct HistoryService {
     history_path: PathBuf,
 }
 
+#[allow(dead_code)]
 impl HistoryService {
     pub fn new() -> Result<Self> {
         let project_dirs = ProjectDirs::from("com", "AbiYT", "AbiYTDownloader")

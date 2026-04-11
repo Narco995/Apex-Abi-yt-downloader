@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Abi YT Downloader - High-performance YouTube video downloader"
 authors = ["Abi YT Team"]
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.81"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

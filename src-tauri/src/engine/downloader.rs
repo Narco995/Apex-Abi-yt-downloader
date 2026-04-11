@@ -173,6 +173,7 @@ impl DownloadEngine {
         }
     }
 
+    #[allow(dead_code)]
     pub fn update_parallel_limit(&self, new_limit: usize) {
         self.semaphore.add_permits(new_limit);
     }

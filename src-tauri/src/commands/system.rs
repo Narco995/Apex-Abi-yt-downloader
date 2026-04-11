@@ -1,4 +1,3 @@
-use tauri::AppHandle;
 use std::process::Command;
 
 #[tauri::command]

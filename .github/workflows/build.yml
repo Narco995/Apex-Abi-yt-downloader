@@ -50,16 +50,8 @@ jobs:
       # ── Install yt-dlp ───────────────────────────────────────────────────────
       # yt-dlp is NOT pre-installed on windows-latest; the app needs it at runtime
       # and check_dependencies() calls it — missing binary = CI runtime failures.
-      - name: Install yt-dlp
-        run: |
-          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o "$env:USERPROFILE\AppData\Local\Microsoft\WindowsApps\yt-dlp.exe"
-          yt-dlp --version
-        shell: pwsh
-
-      # ── Install ffmpeg ───────────────────────────────────────────────────────
-      # ffmpeg is required for audio extraction and format merging.
-      - name: Install ffmpeg
-        run: choco install ffmpeg --no-progress -y
+      - name: Install yt-dlp and ffmpeg
+        run: choco install yt-dlp ffmpeg --no-progress -y
         shell: pwsh
 
       # ── Verify both tools ────────────────────────────────────────────────────
