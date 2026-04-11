@@ -6,14 +6,23 @@ import type { DownloadProgress, Download } from '@/types';
 export function useDownloads() {
   const { activeDownloads, setActiveDownloads, updateDownload, fetchDependencies } = useAppStore();
 
+  // Defined BEFORE useEffect to avoid temporal dead zone (TDZ) — TypeScript strict
+  // mode flags block-scoped variables used before their lexical declaration.
+  const loadActiveDownloads = useCallback(async () => {
+    try {
+      const downloads = await api.getActiveDownloads();
+      setActiveDownloads(downloads);
+    } catch (error) {
+      console.error('Failed to load active downloads:', error);
+    }
+  }, [setActiveDownloads]);
+
   useEffect(() => {
     fetchDependencies();
     loadActiveDownloads();
 
-    // Fix: capture unlisten functions and call them on cleanup.
-    // Previously listeners were registered with no cleanup, causing them to stack
-    // up on every mount (especially in React Strict Mode), leaking memory and
-    // causing duplicate updates.
+    // Capture unlisten functions and call them on cleanup to prevent listener
+    // stacking on every mount (especially in React Strict Mode).
     let unlistenProgress: (() => void) | undefined;
     let unlistenComplete: (() => void) | undefined;
 
@@ -44,16 +53,7 @@ export function useDownloads() {
       unlistenProgress?.();
       unlistenComplete?.();
     };
-  }, []);
-
-  const loadActiveDownloads = async () => {
-    try {
-      const downloads = await api.getActiveDownloads();
-      setActiveDownloads(downloads);
-    } catch (error) {
-      console.error('Failed to load active downloads:', error);
-    }
-  };
+  }, [fetchDependencies, loadActiveDownloads, updateDownload]);
 
   const startDownload = useCallback(async (request: DownloadRequest) => {
     try {
